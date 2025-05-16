@@ -43,3 +43,7 @@ args = """
 find custom_components/homevoice_connect -type f | sort && echo \"
 ---
 \" && echo \"Integration Structure:\" && find custom_components/homevoice_connect -type f | sort | xargs wc -l"""
+
+[[ports]]
+localPort = 5000
+externalPort = 80

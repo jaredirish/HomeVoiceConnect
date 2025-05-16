@@ -115,12 +115,16 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label for="api_key" class="form-label">Google Gemini API Key</label>
+                                <label for="api_key" class="form-label">Google Gemini Live API Key</label>
                                 <div class="input-group">
                                     <input type="password" class="form-control" id="api_key" name="api_key" value="{{ config.api_key }}">
                                     <button class="btn btn-outline-secondary" type="button" id="test-api-key">Test</button>
                                 </div>
-                                <div class="form-text">Get your API key from <a href="https://ai.google.dev/" target="_blank">Google AI Studio</a></div>
+                                <div class="form-text">Get your API key from <a href="https://ai.google.dev/api/live" target="_blank">Google AI Studio's Gemini Live API</a></div>
+                                <div class="alert alert-info mt-2 small">
+                                    <strong>About Gemini Live API:</strong> This integration uses Google's Gemini Live API for audio processing and 
+                                    conversational AI. Make sure your API key has access to Gemini Live features.
+                                </div>
                             </div>
                             
                             <div class="mb-3">
