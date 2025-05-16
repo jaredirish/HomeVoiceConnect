@@ -192,6 +192,26 @@
             </div>
             
             <div class="col-md-6 mb-4">
+                <div class="card mb-4">
+                    <div class="card-header">Interaction Statistics</div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <h2 class="display-4">{{ config.total_interactions }}</h2>
+                                <p class="text-muted">Total Interactions</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h2 class="display-4">{{ config.successful_interactions }}</h2>
+                                <p class="text-muted">Successful</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h2 class="display-4">{{ config.failed_interactions }}</h2>
+                                <p class="text-muted">Failed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="card h-100">
                     <div class="card-header">About HomeVoice Connect</div>
                     <div class="card-body">

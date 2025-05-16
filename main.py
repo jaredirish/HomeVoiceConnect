@@ -40,7 +40,10 @@ def load_config():
         "wake_word_sensitivity": 0.5,
         "input_device": "",
         "output_device": "",
-        "tts_service": "tts.google_translate_say"
+        "tts_service": "tts.google_translate_say",
+        "total_interactions": 0,
+        "successful_interactions": 0,
+        "failed_interactions": 0
     }
 
 def save_config(config):
@@ -128,6 +131,21 @@ def test_tts(output_device, tts_service):
     logger.info(f"Testing TTS '{tts_service}' on device '{output_device}'")
     return True
 
+# Log interaction without database
+def log_interaction(wake_word, transcription, response, status="completed"):
+    config = load_config()
+    config['total_interactions'] = config.get('total_interactions', 0) + 1
+    
+    if status == "completed":
+        config['successful_interactions'] = config.get('successful_interactions', 0) + 1
+    elif status in ["error", "failed"]:
+        config['failed_interactions'] = config.get('failed_interactions', 0) + 1
+    
+    save_config(config)
+    
+    logger.info(f"Logged interaction: {transcription[:30]}")
+    return True
+
 # Routes
 @app.route('/')
 def index():
@@ -137,10 +155,10 @@ def index():
     tts_services = get_tts_services()
     
     return render_template('index.html', 
-                           config=config,
-                           audio_devices=audio_devices,
-                           wake_words=wake_words,
-                           tts_services=tts_services)
+                          config=config,
+                          audio_devices=audio_devices,
+                          wake_words=wake_words,
+                          tts_services=tts_services)
 
 @app.route('/config', methods=['POST'])
 def update_config():
