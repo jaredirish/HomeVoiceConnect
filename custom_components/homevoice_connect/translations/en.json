@@ -1,0 +1,42 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up HomeVoice Connect",
+        "description": "Set up a voice assistant using Google's Gemini Live API",
+        "data": {
+          "name": "Integration Name",
+          "api_key": "Google Gemini API Key",
+          "wake_word": "Wake Word",
+          "wake_word_sensitivity": "Wake Word Sensitivity",
+          "input_device": "Input Device (microphone entity or device name)",
+          "output_device": "Output Device (media player entity)",
+          "tts_service": "TTS Service"
+        }
+      }
+    },
+    "error": {
+      "missing_api_key": "Google Gemini API Key is required",
+      "invalid_api_key": "Invalid Google Gemini API Key",
+      "missing_input_device": "Input Device is required",
+      "missing_output_device": "Output Device is required",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This HomeVoice Connect integration is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HomeVoice Connect Options",
+        "description": "Configure the HomeVoice Connect integration",
+        "data": {
+          "wake_word": "Wake Word",
+          "wake_word_sensitivity": "Wake Word Sensitivity (0.0-1.0)",
+          "tts_service": "TTS Service"
+        }
+      }
+    }
+  }
+}

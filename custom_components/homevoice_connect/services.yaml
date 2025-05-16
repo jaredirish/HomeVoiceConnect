@@ -1,0 +1,46 @@
+restart:
+  name: Restart
+  description: Restart the HomeVoice Connect integration
+  target:
+    entity:
+      integration: homevoice_connect
+
+set_wake_word:
+  name: Set Wake Word
+  description: Change the wake word for HomeVoice Connect
+  target:
+    entity:
+      integration: homevoice_connect
+  fields:
+    wake_word:
+      name: Wake Word
+      description: New wake word to use (e.g., "hey computer", "alexa", "ok google")
+      required: true
+      example: "hey computer"
+      selector:
+        text:
+
+set_sensitivity:
+  name: Set Sensitivity
+  description: Change the wake word detection sensitivity
+  target:
+    entity:
+      integration: homevoice_connect
+  fields:
+    sensitivity:
+      name: Sensitivity
+      description: Wake word detection sensitivity (0.0-1.0)
+      required: true
+      example: 0.5
+      selector:
+        number:
+          min: 0.0
+          max: 1.0
+          step: 0.1
+
+start_listening:
+  name: Start Listening
+  description: Manually start listening for a command (bypasses wake word)
+  target:
+    entity:
+      integration: homevoice_connect

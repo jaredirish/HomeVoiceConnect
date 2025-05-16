@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeVoice Connect</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <style>
+        .header-icon {
+            font-size: 3rem;
+            margin-right: 1rem;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .status-green {
+            background-color: var(--bs-success);
+        }
+        .status-red {
+            background-color: var(--bs-danger);
+        }
+        .status-yellow {
+            background-color: var(--bs-warning);
+        }
+        .card-header {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <header class="pb-3 mb-4 border-bottom">
+            <div class="d-flex align-items-center">
+                <div class="header-icon">🎤</div>
+                <div>
+                    <h1 class="h2">HomeVoice Connect</h1>
+                    <p class="lead">Home Assistant voice assistant using Google's Gemini Live API</p>
+                </div>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">Integration Status</div>
+                    <div class="card-body">
+                        <div class="row" id="status-indicators">
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="mb-2 fs-1">🔊</div>
+                                    <h5>Wake Word Detector</h5>
+                                    <div class="mt-1">
+                                        <span class="status-indicator status-yellow" id="wake-word-status"></span>
+                                        <span id="wake-word-status-text">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="mb-2 fs-1">🎙️</div>
+                                    <h5>Audio Capture</h5>
+                                    <div class="mt-1">
+                                        <span class="status-indicator status-yellow" id="audio-capture-status"></span>
+                                        <span id="audio-capture-status-text">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="mb-2 fs-1">🧠</div>
+                                    <h5>Gemini API</h5>
+                                    <div class="mt-1">
+                                        <span class="status-indicator status-yellow" id="gemini-api-status"></span>
+                                        <span id="gemini-api-status-text">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <div class="mb-2 fs-1">📢</div>
+                                    <h5>TTS Output</h5>
+                                    <div class="mt-1">
+                                        <span class="status-indicator status-yellow" id="tts-output-status"></span>
+                                        <span id="tts-output-status-text">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">Configuration</div>
+                    <div class="card-body">
+                        <form id="config-form" action="/config" method="post">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Integration Name</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ config.name }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="api_key" class="form-label">Google Gemini API Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="api_key" name="api_key" value="{{ config.api_key }}">
+                                    <button class="btn btn-outline-secondary" type="button" id="test-api-key">Test</button>
+                                </div>
+                                <div class="form-text">Get your API key from <a href="https://ai.google.dev/" target="_blank">Google AI Studio</a></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="wake_word" class="form-label">Wake Word</label>
+                                <select class="form-select" id="wake_word" name="wake_word">
+                                    {% for word in wake_words %}
+                                        <option value="{{ word }}" {% if word == config.wake_word %}selected{% endif %}>{{ word }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="wake_word_sensitivity" class="form-label">Wake Word Sensitivity: <span id="sensitivity-value">{{ config.wake_word_sensitivity }}</span></label>
+                                <input type="range" class="form-range" id="wake_word_sensitivity" name="wake_word_sensitivity" min="0" max="1" step="0.1" value="{{ config.wake_word_sensitivity }}">
+                                <div class="d-flex justify-content-between">
+                                    <span>Less Sensitive</span>
+                                    <span>More Sensitive</span>
+                                </div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="test-wake-word">Test Wake Word</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="input_device" class="form-label">Input Device (Microphone)</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="input_device" name="input_device">
+                                        <option value="" {% if not config.input_device %}selected{% endif %}>Select a microphone</option>
+                                        {% for device in audio_devices.input %}
+                                            <option value="{{ device }}" {% if device == config.input_device %}selected{% endif %}>{{ device }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="test-audio-capture">Test</button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="output_device" class="form-label">Output Device (Speaker)</label>
+                                <select class="form-select" id="output_device" name="output_device">
+                                    <option value="" {% if not config.output_device %}selected{% endif %}>Select a speaker</option>
+                                    {% for device in audio_devices.output %}
+                                        <option value="{{ device }}" {% if device == config.output_device %}selected{% endif %}>{{ device }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="tts_service" class="form-label">TTS Service</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="tts_service" name="tts_service">
+                                        {% for service in tts_services %}
+                                            <option value="{{ service }}" {% if service == config.tts_service %}selected{% endif %}>{{ service }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" id="test-tts">Test</button>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Save Configuration</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">About HomeVoice Connect</div>
+                    <div class="card-body">
+                        <h5>How It Works</h5>
+                        <p>HomeVoice Connect is a custom integration for Home Assistant that enables an always-on, local wake word activated voice assistant using Google's Gemini Live API.</p>
+                        
+                        <div class="mb-4">
+                            <h6>1. Wake Word Detection</h6>
+                            <p>Using openWakeWord for efficient, local wake word detection. The system continuously listens for the configured wake word (e.g., "Hey Computer").</p>
+                            
+                            <h6>2. Audio Capture</h6>
+                            <p>Once the wake word is detected, the system begins capturing audio and uses Voice Activity Detection (VAD) to determine when you've finished speaking.</p>
+                            
+                            <h6>3. Gemini Processing</h6>
+                            <p>Your command is sent to Google's Gemini Live API, which provides advanced natural language understanding and generates a response.</p>
+                            
+                            <h6>4. Response Playback</h6>
+                            <p>The response is played back through your configured Home Assistant TTS service and media player.</p>
+                        </div>
+                        
+                        <h5>Privacy Considerations</h5>
+                        <p>The wake word detection runs locally on your Home Assistant server. Audio is only sent to Google's servers after the wake word is detected and only for the duration of your command.</p>
+                        
+                        <h5>Supported Wake Words</h5>
+                        <ul class="list-group list-group-flush">
+                            {% for word in wake_words %}
+                                <li class="list-group-item bg-transparent">{{ word }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update sensitivity value display
+            const sensitivitySlider = document.getElementById('wake_word_sensitivity');
+            const sensitivityValue = document.getElementById('sensitivity-value');
+            
+            sensitivitySlider.addEventListener('input', function() {
+                sensitivityValue.textContent = this.value;
+            });
+            
+            // Test buttons
+            document.getElementById('test-api-key').addEventListener('click', function() {
+                const apiKey = document.getElementById('api_key').value;
+                testComponent('/test/gemini_api', { api_key: apiKey });
+            });
+            
+            document.getElementById('test-wake-word').addEventListener('click', function() {
+                const wakeWord = document.getElementById('wake_word').value;
+                const sensitivity = document.getElementById('wake_word_sensitivity').value;
+                testComponent('/test/wake_word', { wake_word: wakeWord, sensitivity: sensitivity });
+            });
+            
+            document.getElementById('test-audio-capture').addEventListener('click', function() {
+                const inputDevice = document.getElementById('input_device').value;
+                testComponent('/test/audio_capture', { input_device: inputDevice });
+            });
+            
+            document.getElementById('test-tts').addEventListener('click', function() {
+                const outputDevice = document.getElementById('output_device').value;
+                const ttsService = document.getElementById('tts_service').value;
+                testComponent('/test/tts', { output_device: outputDevice, tts_service: ttsService });
+            });
+            
+            // Function to test components
+            function testComponent(url, data) {
+                const formData = new FormData();
+                for (const [key, value] of Object.entries(data)) {
+                    formData.append(key, value);
+                }
+                
+                fetch(url, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Test successful: ' + data.message);
+                    } else {
+                        alert('Test failed: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error performing test: ' + error);
+                });
+            }
+            
+            // Update status indicators
+            function updateStatus() {
+                fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Wake Word Detector
+                    const wakeWordStatus = document.getElementById('wake-word-status');
+                    const wakeWordStatusText = document.getElementById('wake-word-status-text');
+                    
+                    if (data.wake_word_detector.status === 'running') {
+                        wakeWordStatus.className = 'status-indicator status-green';
+                        wakeWordStatusText.textContent = 'Running';
+                    } else {
+                        wakeWordStatus.className = 'status-indicator status-red';
+                        wakeWordStatusText.textContent = 'Not Running';
+                    }
+                    
+                    // Audio Capture
+                    const audioCaptureStatus = document.getElementById('audio-capture-status');
+                    const audioCaptureStatusText = document.getElementById('audio-capture-status-text');
+                    
+                    if (data.audio_capture.status === 'ready') {
+                        audioCaptureStatus.className = 'status-indicator status-green';
+                        audioCaptureStatusText.textContent = 'Ready';
+                    } else {
+                        audioCaptureStatus.className = 'status-indicator status-red';
+                        audioCaptureStatusText.textContent = 'Not Configured';
+                    }
+                    
+                    // Gemini API
+                    const geminiApiStatus = document.getElementById('gemini-api-status');
+                    const geminiApiStatusText = document.getElementById('gemini-api-status-text');
+                    
+                    if (data.gemini_api.status === 'connected') {
+                        geminiApiStatus.className = 'status-indicator status-green';
+                        geminiApiStatusText.textContent = 'Connected';
+                    } else {
+                        geminiApiStatus.className = 'status-indicator status-red';
+                        geminiApiStatusText.textContent = 'Not Configured';
+                    }
+                    
+                    // TTS Output
+                    const ttsOutputStatus = document.getElementById('tts-output-status');
+                    const ttsOutputStatusText = document.getElementById('tts-output-status-text');
+                    
+                    if (data.tts_output.status === 'ready') {
+                        ttsOutputStatus.className = 'status-indicator status-green';
+                        ttsOutputStatusText.textContent = 'Ready';
+                    } else {
+                        ttsOutputStatus.className = 'status-indicator status-red';
+                        ttsOutputStatusText.textContent = 'Not Configured';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+            
+            // Initial status update
+            updateStatus();
+            
+            // Update status every 5 seconds
+            setInterval(updateStatus, 5000);
+        });
+    </script>
+</body>
+</html>
